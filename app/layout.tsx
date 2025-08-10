@@ -19,7 +19,7 @@ export default function RootLayout({
             <h1 className="text-lg font-medium text-text">DynamicQIP</h1>
             <nav className="flex items-center gap-4 text-sm">
               <a href="/" className="text-text hover:text-primary">Home</a>
-              <a href="/QIP_Payout_Formula.html" className="text-text hover:text-primary">Formula</a>
+              <a href="/formula" className="text-text hover:text-primary">Formula</a>
               <a href="/about" className="text-text hover:text-primary">About</a>
             </nav>
           </div>
