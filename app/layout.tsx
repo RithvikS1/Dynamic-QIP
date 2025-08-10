@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans text-text bg-background min-h-screen">
-        <header className="border-b border-secondary bg-white">
+        <header className="border-b border-secondary bg-white print:hidden">
           <div className="container mx-auto px-6 py-4 flex items-center gap-6">
             <h1 className="text-lg font-medium text-text">DynamicQIP</h1>
             <nav className="flex items-center gap-4 text-sm">

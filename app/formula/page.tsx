@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 declare global {
   interface Window {
@@ -9,22 +9,36 @@ declare global {
 }
 
 export default function FormulaPage() {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+
   useEffect(() => {
     const scriptId = 'mathjax-script'
+    const typeset = () => {
+      if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+        const target = containerRef.current ? [containerRef.current] : undefined
+        window.MathJax.typesetPromise(target).catch(() => {/* ignore */})
+      } else if (window.MathJax?.typeset) {
+        window.MathJax.typeset()
+      }
+    }
+
     if (!document.getElementById(scriptId)) {
       window.MathJax = {
-        tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+        startup: { typeset: false },
+        tex: {
+          inlineMath: [['\\(', '\\)']],
+          displayMath: [['\\[', '\\]']],
+          packages: { '[+]': ['ams'] },
+        },
       }
       const script = document.createElement('script')
       script.id = scriptId
       script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'
       script.async = true
-      script.onload = () => {
-        window.MathJax?.typeset?.()
-      }
+      script.onload = typeset
       document.head.appendChild(script)
     } else {
-      window.MathJax?.typeset?.()
+      typeset()
     }
   }, [])
 
@@ -39,11 +53,11 @@ export default function FormulaPage() {
   const eqMainBonus = String.raw`\[ Payout_{\\text{main},i} = NAS_i \\cdot P_T \\cdot (1-\\beta) \\quad ; \\quad Bonus_i = \\left( \\frac{I_i}{\\sum_j I_j} \\right) P_T \\cdot \\beta \\]`
 
   return (
-    <div className="container mx-auto p-6 max-w-3xl">
+    <div ref={containerRef} className="container mx-auto p-6 max-w-3xl">
       <h1 className="text-2xl font-medium text-text mb-1">QIP Payout Formula</h1>
       <p className="text-gray-600 mb-4">Fully formatted equation and definitions for distribution of funds across clinics.</p>
 
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 print:hidden">
         <button
           className="btn px-3 py-2 bg-primary text-white rounded-md shadow-sm hover:bg-blue-600"
           onClick={() => window.print()}
@@ -89,6 +103,15 @@ export default function FormulaPage() {
 
       <h3 className="text-base font-medium text-text mt-5 mb-1">Main and Bonus Payouts</h3>
       <p>{eqMainBonus}</p>
+
+      <div className="mt-4 p-4 border border-secondary rounded-xl bg-white">
+        <h4 className="text-sm font-medium text-text mb-2">Notes</h4>
+        <ul className="list-disc ml-6 text-gray-700 space-y-1">
+          <li>For unweighted calculations of {String.raw`\(PF_i\)`} and {String.raw`\(I_i\)`}, apply equal weights of {String.raw`\(1/K\)`} across all {String.raw`\(K\)`} benchmarks.</li>
+          <li>Parameter ranges are defined as {String.raw`\(\beta \in [0,1]\)`}, {String.raw`\(\gamma > 0\)`}, and {String.raw`\(\alpha \ge 0\)`}.</li>
+          <li>If denominators such as {String.raw`\(R_{b,k}\)`} or {String.raw`\(R_{\\text{prev},i,k}\)`} are zero, set the corresponding performance or improvement term to zero or exclude it from aggregation to avoid undefined values.</li>
+        </ul>
+      </div>
 
       <hr className="my-6 border-secondary" />
 
