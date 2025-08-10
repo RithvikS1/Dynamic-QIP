@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QIP Payout Formula</title>
+  <style>
+    :root {
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #3B82F6;
+      --bg: #ffffff;
+    }
+    html, body { background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+    body { font-family: -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; line-height: 1.6; }
+    .container { max-width: 860px; margin: 40px auto; padding: 0 24px; }
+    h1 { font-size: 28px; margin: 0 0 8px; font-weight: 600; }
+    h2 { font-size: 20px; margin: 28px 0 8px; font-weight: 600; }
+    h3 { font-size: 16px; margin: 20px 0 6px; font-weight: 600; }
+    p { margin: 10px 0; }
+    ul { margin: 8px 0 16px 20px; }
+    li { margin: 6px 0; }
+    hr { border: 0; border-top: 1px solid var(--border); margin: 24px 0; }
+    .lead { color: var(--muted); margin-top: 0; }
+    .box { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; background: #fff; }
+    .pill { display: inline-block; font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); }
+    .print-tip { color: var(--muted); font-size: 13px; }
+    .btn { display: inline-block; background: var(--primary); color: #fff; padding: 10px 14px; border-radius: 8px; text-decoration: none; border: none; cursor: pointer; }
+    .btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.35); }
+    .btn-row { display: flex; gap: 10px; align-items: center; margin: 14px 0 0; }
+    @media print {
+      .no-print { display: none; }
+      body { margin: 0; }
+      .container { margin: 0; max-width: none; }
+    }
+  </style>
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] } };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>QIP Payout Formula</h1>
+    <p class="lead">Fully formatted equation and definitions for distribution of funds across clinics.</p>
+
+    <div class="no-print btn-row">
+      <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+      <span class="print-tip">Tip: In the print dialog, choose “Save as PDF”.</span>
+    </div>
+
+    <h2>Final Payout</h2>
+    <div class="box">
+      <p>\[ P_i = \left( \frac{V_i^{\gamma} \, PF_i}{\sum_j V_j^{\gamma} \, PF_j} \right) P_T (1-\beta) \;+\; \left( \frac{I_i}{\sum_j I_j} \right) P_T \, \beta \]</p>
+      <ul>
+        <li><strong>Main Pool Component</strong>: \( \left( \frac{V_i^{\gamma} PF_i}{\sum_j V_j^{\gamma} PF_j} \right) P_T (1-\beta) \)</li>
+        <li><strong>Bonus Pool Component</strong>: \( \left( \frac{I_i}{\sum_j I_j} \right) P_T \, \beta \)</li>
+      </ul>
+    </div>
+
+    <hr />
+
+    <h2>Components</h2>
+
+    <h3>Base Share and Normalization</h3>
+    <p>\[ B_i = \frac{V_i^{\gamma}}{\sum_j V_j^{\gamma}} \quad ; \quad AS_i = B_i \cdot PF_i \quad ; \quad NAS_i = \frac{AS_i}{\sum_j AS_j} \]</p>
+
+    <h3>Performance Factor per Benchmark</h3>
+    <p>\[ PF_{i,k} = 1 + \alpha \cdot \max\!\left(0,\; \frac{R_{i,k} - R_{b,k}}{R_{b,k}}\right) \]</p>
+
+    <h3>Combined Performance Factor (Clinic \(i\))</h3>
+    <p class="pill">Weights \(w_k\) are enforced to sum to 1 in the UI; otherwise simple average.</p>
+    <p>\[ PF_i = \sum_k w_k \, PF_{i,k} \quad \text{(weighted; } \sum_k w_k = 1\text{)} \]</p>
+    <p>\( PF_i = \text{average of } PF_{i,k} \text{ over } k \quad \text{(no weights)} \)</p>
+
+    <h3>Improvement per Benchmark and Total Improvement</h3>
+    <p>\[ Improvement_{i,k} = \max\!\left(0,\; \frac{R_{i,k} - R_{\\text{prev},i,k}}{R_{\\text{prev},i,k}}\right) \]</p>
+    <p class="pill">Improvement is weighted by benchmark priorities, similar to performance factors.</p>
+    <p>\[ I_i = \sum_k w_k \, Improvement_{i,k} \quad \text{(weighted; } \sum_k w_k = 1\text{)} \]</p>
+    <p>\( I_i = \text{average of } Improvement_{i,k} \text{ over } k \quad \text{(no weights)} \)</p>
+
+    <h3>Main and Bonus Payouts</h3>
+    <p>\[ Payout_{\\text{main},i} = NAS_i \\cdot P_T \\cdot (1-\\beta) \\quad ; \\quad Bonus_i = \\left( \\frac{I_i}{\\sum_j I_j} \\right) P_T \\cdot \\beta \\]</p>
+
+    <hr />
+
+    <h2>Variables and Symbols</h2>
+    <ul>
+      <li>\(P_i\): Final payout for clinic \(i\)</li>
+      <li>\(Payout_{\\text{main},i}\): Main pool payout for clinic \(i\)</li>
+      <li>\(Bonus_i\): Bonus payout for clinic \(i\)</li>
+      <li>\(V_i\): Clinic \(i\) volume (e.g., number of patients)</li>
+      <li>\(R_{i,k}\): Clinic \(i\)'s current rate on benchmark \(k\)</li>
+      <li>\(R_{b,k}\): Benchmark target rate for benchmark \(k\)</li>
+      <li>\(R_{\\text{prev},i,k}\): Clinic \(i\)'s previous rate on benchmark \(k\)</li>
+      <li>\(w_k\): Weight for benchmark \(k\) (optional; if none provided, all benchmarks weighted equally)</li>
+      <li>\(PF_{i,k}\): Performance factor for clinic \(i\) on benchmark \(k\)</li>
+      <li>\(PF_i\): Combined performance factor for clinic \(i\) (weighted or simple average of \(PF_{i,k}\))</li>
+      <li>\(B_i\): Base share for clinic \(i\) from volume weighting</li>
+      <li>\(AS_i\): Adjusted share for clinic \(i\) prior to normalization</li>
+      <li>\(NAS_i\): Normalized adjusted share for clinic \(i\)</li>
+      <li>\(I_i\): Total improvement score for clinic \(i\)</li>
+      <li>\(P_T\): Total payout pool</li>
+      <li>\(\\beta\): Bonus percentage (fraction in \([0,1]\))</li>
+      <li>\(\\alpha\): Performance sensitivity parameter</li>
+      <li>\(\\gamma\): Volume weighting parameter</li>
+    </ul>
+  </div>
+</body>
+</html>
+
