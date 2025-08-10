@@ -12,6 +12,22 @@ export default function FormulaPage() {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
+    // Add print styles
+    const styleId = 'print-styles'
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style')
+      style.id = styleId
+      style.textContent = `
+        @media print {
+          body * { visibility: hidden; }
+          #formula-content, #formula-content * { visibility: visible; }
+          #formula-content { position: absolute; left: 0; top: 0; width: 100%; }
+          header, .print\\:hidden { display: none !important; }
+        }
+      `
+      document.head.appendChild(style)
+    }
+
     const scriptId = 'mathjax-script'
     const typeset = () => {
       if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
@@ -50,10 +66,10 @@ export default function FormulaPage() {
   const eqImpK = String.raw`\[ Improvement_{i,k} = \max\!\left(0,\; \frac{R_{i,k} - R_{\\text{prev},i,k}}{R_{\\text{prev},i,k}}\right) \]`
   const eqImp = String.raw`\[ I_i = \sum_k w_k \, Improvement_{i,k} \quad \text{(weighted; } \sum_k w_k = 1\text{)} \]`
   const eqImpNoWeights = String.raw`\( I_i = \text{average of } Improvement_{i,k} \text{ over } k \quad \text{(no weights)} \)`
-  const eqMainBonus = String.raw`\[ Payout_{\\text{main},i} = NAS_i \\cdot P_T \\cdot (1-\\beta) \\quad ; \\quad Bonus_i = \\left( \\frac{I_i}{\\sum_j I_j} \\right) P_T \\cdot \\beta \\]`
+  const eqMainBonus = String.raw`\[ Payout_{\text{main},i} = NAS_i \cdot P_T \cdot (1-\beta) \quad ; \quad Bonus_i = \left( \frac{I_i}{\sum_j I_j} \right) P_T \cdot \beta \]`
 
   return (
-    <div ref={containerRef} className="container mx-auto p-6 max-w-3xl">
+    <div ref={containerRef} id="formula-content" className="container mx-auto p-6 max-w-3xl">
       <h1 className="text-2xl font-medium text-text mb-1">QIP Payout Formula</h1>
       <p className="text-gray-600 mb-4">Fully formatted equation and definitions for distribution of funds across clinics.</p>
 
@@ -78,6 +94,10 @@ export default function FormulaPage() {
             <strong>Bonus Pool Component</strong>: {String.raw`\( \left( \frac{I_i}{\sum_j I_j} \right) P_T \, \beta \)`}
           </li>
         </ul>
+        <p className="text-sm text-gray-600 mt-3">
+          This formula distributes the total payout pool {String.raw`\(P_T\)`} between a main pool {String.raw`\((1-\beta)\)`} and bonus pool {String.raw`\((\beta)\)`}, 
+          where {String.raw`\(\beta\)`} controls the fraction allocated to improvement bonuses.
+        </p>
       </div>
 
       <hr className="my-6 border-secondary" />
@@ -86,9 +106,17 @@ export default function FormulaPage() {
 
       <h3 className="text-base font-medium text-text mt-5 mb-1">Base Share and Normalization</h3>
       <p>{eqBase}</p>
+      <p className="text-sm text-gray-600 mt-2">
+        Volume weighting parameter {String.raw`\(\gamma > 0\)`} controls how much clinic size influences base allocation. 
+        Higher {String.raw`\(\gamma\)`} values favor larger clinics more heavily.
+      </p>
 
       <h3 className="text-base font-medium text-text mt-5 mb-1">Performance Factor per Benchmark</h3>
       <p>{eqPFk}</p>
+      <p className="text-sm text-gray-600 mt-2">
+        Performance sensitivity {String.raw`\(\alpha \ge 0\)`} determines bonus multiplier for exceeding benchmarks. 
+        If {String.raw`\(R_{b,k} = 0\)`}, the performance factor defaults to 1 to avoid division by zero.
+      </p>
 
       <h3 className="text-base font-medium text-text mt-5 mb-1">Combined Performance Factor (Clinic {String.raw`\(i\)`})</h3>
       <p className="inline-block text-xs px-3 py-1 rounded-full border border-secondary text-gray-500">Weights {String.raw`\(w_k\)`} are enforced to sum to 1 in the UI; otherwise simple average.</p>
@@ -97,6 +125,9 @@ export default function FormulaPage() {
 
       <h3 className="text-base font-medium text-text mt-5 mb-1">Improvement per Benchmark and Total Improvement</h3>
       <p>{eqImpK}</p>
+      <p className="text-sm text-gray-600 mt-2">
+        Improvement rewards year-over-year progress. If {String.raw`\(R_{\text{prev},i,k} = 0\)`}, the improvement term is excluded to avoid undefined values.
+      </p>
       <p className="inline-block text-xs px-3 py-1 rounded-full border border-secondary text-gray-500">Improvement is weighted by benchmark priorities, similar to performance factors.</p>
       <p className="mt-2">{eqImp}</p>
       <p>{eqImpNoWeights}</p>
